@@ -2,6 +2,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/fZu9AS9lG2Pt6IQdQLdAk0f";
+
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-black text-white">
@@ -15,7 +17,6 @@ export default function HomePage() {
       {/* Header */}
       <header className="relative mx-auto flex w-full max-w-6xl items-center justify-between px-6 pt-8">
         <div className="flex items-center gap-3">
-          {/* Logo restored */}
           <Image
             src="/bkm-logo.png"
             alt="Brian Kelsey Media"
@@ -30,7 +31,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Top right button */}
         <Link
           href="/planner"
           className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
@@ -65,7 +65,6 @@ export default function HomePage() {
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            {/* Bottom left button now matches “Try the demo” */}
             <Link
               href="/planner"
               className="rounded-full bg-amber-500 px-6 py-3 text-sm font-bold text-black hover:bg-amber-400"
@@ -73,13 +72,15 @@ export default function HomePage() {
               Try the demo
             </Link>
 
-            {/* Paid link – keep if you want it */}
-            <Link
-              href="/planner?paid=1"
+            {/* ✅ Paid button now goes to Stripe (NO paid=1 bypass) */}
+            <a
+              href={STRIPE_CHECKOUT_URL}
+              target="_blank"
+              rel="noreferrer"
               className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
             >
               Buy the Full Version ($29)
-            </Link>
+            </a>
           </div>
 
           <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-6">
@@ -93,10 +94,9 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Right hero image (THIS is the swap) */}
+        {/* Right hero image */}
         <div className="relative">
           <div className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_0_120px_rgba(255,170,0,0.15)]">
-            {/* 16:9 horizontal container */}
             <div className="relative aspect-video w-full">
               <Image
                 src="/bkm-landing.png"
@@ -111,7 +111,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="relative mx-auto w-full max-w-6xl px-6 pb-10 text-xs text-white/50">
         © {new Date().getFullYear()} Brian Kelsey Media
       </footer>
