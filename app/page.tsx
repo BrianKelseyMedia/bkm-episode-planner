@@ -7,9 +7,9 @@ export default function HomePage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
-              src="/bkm-logo.png"
+              src="/bkm-landing.png"
               alt="Brian Kelsey Media"
-              className="h-8 w-8 rounded"
+              className="h-8h-[420px] w-full rounded-2xl object-cover"
             />
             <div className="text-sm text-white/70">
               Premium video strategy + production
