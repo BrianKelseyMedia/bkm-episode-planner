@@ -6,7 +6,7 @@ export default function PlannerPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-black text-white flex items-center justify-center">
-          Loading…
+          <p className="text-sm text-zinc-300">Loading…</p>
         </div>
       }
     >
