@@ -1,539 +1,449 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { STRIPE_PAYMENT_LINK } from "@/lib/stripe";
 
-/**
- * PlannerClient.tsx
- * - Demo mode ALWAYS shows Weeks 1–3 only.
- * - NO URL param (?paid=1) can unlock anything.
- * - All "Unlock" actions go to Stripe Checkout URL.
- * - Copy only copies visible weeks in demo (1–3).
- * - Inputs start EMPTY (no stored test values, no autofill from localStorage).
- */
+// NOTE: This file does NOT implement true payment verification.
+// It only:
+// - runs demo by default (Weeks 1–3)
+// - supports "paid mode" if ?paid=1 is present (for preview/testing)
+// - routes ALL buy/unlock links to Stripe (not to ?paid=1)
 
-const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/fZu9AS9lG2Pt6IQdQLdAk0f";
+type Inputs = {
+  showName: string;
+  niche: string;
+  whoFor: string;
+  problem: string;
+  outcome: string;
+};
 
-type EpisodeBrief = {
+type Episode = {
   week: number;
   title: string;
   audienceTrigger: string;
   positioningAngle: string;
   hostCredibilityMoment: string;
   guestArchetype: string;
-  whyGuestStrengthensAuthority: string;
-  interviewQuestions: string[];
-  distributionPlay: {
-    verticalHook: string;
-    linkedinAngle: string;
-    newsletterAngle: string;
-  };
+  distributionPlay: string;
   strategicOutcome: string;
-  trendingVideos?: { title: string; channel?: string; url: string }[];
+  interviewQuestions: string[];
 };
 
-function openStripe() {
-  window.location.href = STRIPE_CHECKOUT_URL;
-}
+function buildEpisodes(inputs: Inputs): Episode[] {
+  const base = {
+    whoFor: inputs.whoFor?.trim() || inputs.niche?.trim() || "your audience",
+    problem: inputs.problem?.trim() || "a frustrating, expensive problem",
+    outcome: inputs.outcome?.trim() || "a clear, repeatable win",
+  };
 
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n));
-}
+  const make = (week: number, title: string): Episode => ({
+    week,
+    title,
+    audienceTrigger: `Your audience (${base.whoFor}) is dealing with ${base.problem} and doesn’t realize the real lever is changing one key habit/belief.`,
+    positioningAngle: `Make the case that the “common advice” in ${inputs.niche} is incomplete, and your framework is the cleaner path to ${base.outcome}.`,
+    hostCredibilityMoment:
+      "Insert a specific moment: a client story, a production insight, or a mistake you’ve seen repeatedly — and what you do differently now.",
+    guestArchetype:
+      "Guest archetype (not generic): a practitioner who lived this problem and can validate the repositioning from experience.",
+    distributionPlay:
+      "Vertical hook + LinkedIn angle + newsletter angle. Hook: the misconception. LinkedIn: contrarian insight. Newsletter: step-by-step mini playbook.",
+    strategicOutcome:
+      "Objection removal + authority proof (the audience should think: ‘this person sees the real game’).",
+    interviewQuestions: [
+      "What are people doing that feels ‘right’ but is actually keeping them stuck?",
+      "What’s the hidden constraint most folks don’t see until it’s too late?",
+      "What’s the one shift that creates momentum fastest?",
+      "What’s the ‘producer lens’ way to think about this problem?",
+      "What would you do if you had to fix this in 30 days?",
+    ],
+  });
 
-function buildPlan(args: {
-  showName: string;
-  niche: string;
-  whoFor: string;
-  problem: string;
-  outcome: string;
-  contrarianTake: string;
-}): EpisodeBrief[] {
-  const { niche, whoFor, problem, outcome, contrarianTake } = args;
+  const show = inputs.showName?.trim() || "Your Show";
 
-  // Simple, high-signal template generator (no external deps)
-  const themes = [
-    "The hidden constraint",
-    "The 3 mistakes",
-    "The myth vs reality",
-    "The simple framework",
-    "The checklist",
-    "The counterintuitive move",
-    "The teardown",
-    "The system, not the hack",
-    "The objection remover",
-    "The time-saver",
-    "The trust builder",
-    "The authority play",
+  // Simple default plan (12). You can swap this for your AI output later.
+  const titles = [
+    `The real reason ${base.whoFor} don’t get ${base.outcome} (and what to do instead)`,
+    `The 3 mistakes that keep ${base.whoFor} stuck with ${base.problem}`,
+    `The simple framework to get ${base.outcome} without overwhelm`,
+    `What the top 1% do differently in ${inputs.niche}`,
+    `How to create a repeatable weekly engine (without burning out)`,
+    `The mindset shift that changes everything for ${base.whoFor}`,
+    `How to diagnose the real problem behind ${base.problem}`,
+    `Your “authority move” playbook for the next 30 days`,
+    `What to stop doing immediately (and why it’s costing you)`,
+    `The checklist you can use every week to stay consistent`,
+    `The guest archetypes that make you look like the expert`,
+    `How to turn ${show} into a lead engine (without being salesy)`,
   ];
 
-  return Array.from({ length: 12 }).map((_, i) => {
-    const week = i + 1;
-
-    const title =
-      week === 1
-        ? `Start here: the real reason ${whoFor || "your audience"} struggles with ${problem || niche}`
-        : `${themes[i]} in ${niche || "your niche"} (and how to get ${outcome || "the result"} faster)`;
-
-    const audienceTrigger =
-      week === 1
-        ? `Your audience is trying to solve "${problem || "the obvious problem"}" but the real risk is "${contrarianTake || "the hidden constraint"}".`
-        : `They think the answer is more effort, but the real leverage is one decision that changes the outcome.`;
-
-    const positioningAngle =
-      contrarianTake?.trim()
-        ? `Take the opposite position of the obvious advice: "${contrarianTake}".`
-        : `Pick a producer lens: you’re not teaching tips — you’re reframing what matters and why.`;
-
-    const hostCredibilityMoment =
-      `Share a quick "I’ve seen this play out" moment: what you noticed, what changed when you fixed it, and the measurable difference.`;
-
-    const guestArchetype =
-      week % 3 === 0
-        ? `Operator archetype: the person who executes this weekly (COO / manager / lead)`
-        : week % 3 === 1
-          ? `Survivor archetype: someone who lived the consequence and rebuilt`
-          : `Skeptic archetype: someone who used to disagree — and changed their mind`;
-
-    const whyGuestStrengthensAuthority =
-      `This guest makes you the guide. You’re the one connecting the dots, naming the framework, and steering to the real takeaway — not just “hosting.”`;
-
-    const interviewQuestions = [
-      `What was the first sign ${problem || "this"} was becoming a bigger issue than you expected?`,
-      `What “obvious solution” didn’t work — and why?`,
-      `What was the hidden constraint nobody talks about in ${niche || "this space"}?`,
-      `What’s the one decision that made the biggest difference?`,
-      `If you had to repeat this process monthly, what would your system be?`,
-    ];
-
-    const distributionPlay = {
-      verticalHook: `“Most people think ${problem || "X"} is the problem. It’s not. It’s THIS.”`,
-      linkedinAngle: `A quick story + lesson: the moment you realized the real constraint — and the simple framework you now use.`,
-      newsletterAngle: `“3 things I’d do this week if I were starting over in ${niche || "this niche"}.”`,
-    };
-
-    const strategicOutcome =
-      week <= 3
-        ? `Trust: make the audience feel understood and safe following your lead.`
-        : week <= 8
-          ? `Repositioning: replace their old belief with your framework.`
-          : `Objection removal + authority proof: show why your approach wins in the real world.`;
-
-    return {
-      week,
-      title,
-      audienceTrigger,
-      positioningAngle,
-      hostCredibilityMoment,
-      guestArchetype,
-      whyGuestStrengthensAuthority,
-      interviewQuestions,
-      distributionPlay,
-      strategicOutcome,
-      trendingVideos: [], // (optional) hook for your inspiration feature
-    };
-  });
-}
-
-function formatPlanText(showName: string, niche: string, plan: EpisodeBrief[]) {
-  const header = `12-Week Episode Plan\nShow: ${showName || "(untitled)"}\nNiche/Audience: ${niche || "(unspecified)"}\n`;
-  const blocks = plan
-    .map((ep) => {
-      return [
-        `\nWeek ${ep.week}: ${ep.title}`,
-        `Audience trigger: ${ep.audienceTrigger}`,
-        `Positioning angle: ${ep.positioningAngle}`,
-        `Host credibility moment: ${ep.hostCredibilityMoment}`,
-        `Guest archetype: ${ep.guestArchetype}`,
-        `Why this guest strengthens authority: ${ep.whyGuestStrengthensAuthority}`,
-        `Interview questions:\n- ${ep.interviewQuestions.join("\n- ")}`,
-        `Distribution play:`,
-        `- Vertical hook: ${ep.distributionPlay.verticalHook}`,
-        `- LinkedIn angle: ${ep.distributionPlay.linkedinAngle}`,
-        `- Newsletter angle: ${ep.distributionPlay.newsletterAngle}`,
-        `Strategic outcome: ${ep.strategicOutcome}`,
-      ].join("\n");
-    })
-    .join("\n");
-
-  return `${header}\n${blocks}\n`;
+  return titles.map((t, i) => make(i + 1, t));
 }
 
 export default function PlannerClient() {
-  // IMPORTANT: demo is ALWAYS demo. No query param can unlock.
-  const isPaid = false;
+  const sp = useSearchParams();
+  const paid = sp.get("paid") === "1"; // demo/preview only
 
-  // Inputs must start empty — no persisted values.
-  const [showName, setShowName] = useState<string>("");
-  const [niche, setNiche] = useState<string>("");
-  const [whoFor, setWhoFor] = useState<string>("");
-  const [problem, setProblem] = useState<string>("");
-  const [outcome, setOutcome] = useState<string>("");
-  const [contrarianTake, setContrarianTake] = useState<string>("");
+  const [inputs, setInputs] = useState<Inputs>({
+    showName: "",
+    niche: "",
+    whoFor: "",
+    problem: "",
+    outcome: "",
+  });
 
+  const [episodes, setEpisodes] = useState<Episode[] | null>(null);
   const [activeWeek, setActiveWeek] = useState<number>(1);
-  const [plan, setPlan] = useState<EpisodeBrief[] | null>(null);
 
-  const visibleWeeks = isPaid ? 12 : 3;
+  const visibleWeeks = paid ? 12 : 3;
 
-  const canGenerate = useMemo(() => {
-    return Boolean(showName.trim()) && Boolean(niche.trim());
-  }, [showName, niche]);
+  const planTitle = useMemo(() => {
+    const a = inputs.showName?.trim();
+    const b = inputs.niche?.trim();
+    if (!a && !b) return "Your plan";
+    if (a && b) return `${a} • ${b}`;
+    return a || b || "Your plan";
+  }, [inputs.showName, inputs.niche]);
 
-  useEffect(() => {
-    // keep activeWeek valid if demo/paid changes later
-    setActiveWeek((w) => clamp(w, 1, visibleWeeks));
-  }, [visibleWeeks]);
-
-  function onGenerate() {
-    const generated = buildPlan({
-      showName,
-      niche,
-      whoFor,
-      problem,
-      outcome,
-      contrarianTake,
-    });
-
-    setPlan(generated);
-    setActiveWeek(1);
-  }
-
-  async function onCopyPlan() {
-    if (!plan) return;
-
-    const slice = plan.slice(0, visibleWeeks);
-    const text = formatPlanText(showName, niche, slice);
-
-    try {
-      await navigator.clipboard.writeText(text);
-      // Optional: tiny UX ping without dependencies
-      alert(isPaid ? "Copied full plan." : "Copied demo (Weeks 1–3).");
-    } catch {
-      alert("Copy failed. Try selecting and copying manually.");
-    }
-  }
-
-  const activeEpisode = plan ? plan[activeWeek - 1] : null;
+  const glowBg = (
+    <div className="pointer-events-none fixed inset-0 opacity-60">
+      <div className="absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-white/5 blur-3xl" />
+      <div className="absolute top-40 left-16 h-[420px] w-[420px] rounded-full bg-amber-500/10 blur-3xl" />
+      <div className="absolute top-72 right-10 h-[420px] w-[420px] rounded-full bg-white/5 blur-3xl" />
+    </div>
+  );
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12">
-      {/* Top header */}
-      <div className="flex items-center justify-between gap-4">
+    <div className="relative">
+      {glowBg}
+
+      {/* Top bar */}
+      <header className="relative mx-auto flex w-full max-w-6xl items-center justify-between px-6 pt-8">
+        <div className="flex items-center gap-3">
+          <Image
+            src="/bkm-logo.png"
+            alt="Brian Kelsey Media"
+            width={34}
+            height={34}
+            className="rounded-md"
+            priority
+          />
+          <div className="leading-tight">
+            <div className="text-sm font-semibold">Brian Kelsey Media</div>
+            <div className="text-xs text-white/60">Episode Planner</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+          >
+            Home
+          </Link>
+
+          {!paid && (
+            <a
+              href={STRIPE_PAYMENT_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400"
+            >
+              Unlock full version ($29)
+            </a>
+          )}
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="relative mx-auto grid w-full max-w-6xl grid-cols-1 gap-10 px-6 pb-10 pt-12 lg:grid-cols-2 lg:items-center">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
             <span className="h-2 w-2 rounded-full bg-amber-400" />
             Episode Planner
           </div>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white">
-            Welcome to your episode planner.
+
+          <h1 className="mt-6 text-5xl font-extrabold tracking-tight sm:text-6xl">
+            Welcome to your
+            <br />
+            episode planner.
           </h1>
-          <p className="mt-3 max-w-2xl text-white/70">
+
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-white/70">
             Answer a few quick questions and this generates a 12-week plan as{" "}
             <span className="font-semibold text-white">Authority Episode Briefs</span>{" "}
-            (strategy, positioning, guest archetypes, distribution plays, plus inspiration you can save to
-            each episode).
+            (strategy, positioning, guest archetypes, distribution plays, plus inspiration you can
+            save to each episode).
           </p>
 
-          {!isPaid && (
-            <div className="mt-6 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4 text-white/80">
-              Demo preview shows <span className="font-semibold text-white">Weeks 1–3</span>. Unlock to export
-              the full 12 weeks.
+          {!paid && (
+            <div className="mt-8 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-white/80">
+              Demo preview shows <span className="font-semibold text-white">Weeks 1–3</span>. Unlock
+              to export the full 12 weeks.
             </div>
           )}
         </div>
-      </div>
 
-      {/* Inputs */}
-      <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-6">
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          <div>
-            <label className="text-sm text-white/70">Show name</label>
-            <input
-              value={showName}
-              onChange={(e) => setShowName(e.target.value)}
-              placeholder=""
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none ring-0 placeholder:text-white/30 focus:border-white/20"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-white/70">Niche / audience category</label>
-            <input
-              value={niche}
-              onChange={(e) => setNiche(e.target.value)}
-              placeholder=""
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none ring-0 placeholder:text-white/30 focus:border-white/20"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="text-sm text-white/70">Who is this show for?</label>
-            <input
-              value={whoFor}
-              onChange={(e) => setWhoFor(e.target.value)}
-              placeholder=""
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none ring-0 placeholder:text-white/30 focus:border-white/20"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-white/70">What problem do you solve?</label>
-            <input
-              value={problem}
-              onChange={(e) => setProblem(e.target.value)}
-              placeholder=""
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none ring-0 placeholder:text-white/30 focus:border-white/20"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-white/70">What outcome do you promise?</label>
-            <input
-              value={outcome}
-              onChange={(e) => setOutcome(e.target.value)}
-              placeholder=""
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none ring-0 placeholder:text-white/30 focus:border-white/20"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="text-sm text-white/70">What’s your contrarian take? (optional)</label>
-            <input
-              value={contrarianTake}
-              onChange={(e) => setContrarianTake(e.target.value)}
-              placeholder=""
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none ring-0 placeholder:text-white/30 focus:border-white/20"
-            />
+        <div className="relative">
+          <div className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_0_120px_rgba(255,170,0,0.15)]">
+            <div className="relative aspect-video w-full">
+              <Image
+                src="/bkm-landing.png"
+                alt="Brian Kelsey Media"
+                fill
+                priority
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              />
+            </div>
           </div>
         </div>
+      </section>
 
-        <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="text-sm text-white/50">
-            {!isPaid ? "Demo generates Weeks 1–3." : "Paid mode unlocked."}
+      {/* Form + Actions */}
+      <section className="relative mx-auto w-full max-w-6xl px-6 pb-10">
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <Field
+              label="Show name"
+              value={inputs.showName}
+              onChange={(v) => setInputs((s) => ({ ...s, showName: v }))}
+              placeholder="e.g., Dogster"
+            />
+            <Field
+              label="Niche / audience category"
+              value={inputs.niche}
+              onChange={(v) => setInputs((s) => ({ ...s, niche: v }))}
+              placeholder="e.g., dog training, dentists, founders"
+            />
+            <Field
+              label="Who is this show for?"
+              value={inputs.whoFor}
+              onChange={(v) => setInputs((s) => ({ ...s, whoFor: v }))}
+              placeholder="e.g., busy dog owners who want calm, repeatable routines"
+              full
+            />
+            <Field
+              label="What problem do you solve?"
+              value={inputs.problem}
+              onChange={(v) => setInputs((s) => ({ ...s, problem: v }))}
+              placeholder="e.g., dogs that pull, bark, or ignore commands"
+            />
+            <Field
+              label="What outcome do you promise?"
+              value={inputs.outcome}
+              onChange={(v) => setInputs((s) => ({ ...s, outcome: v }))}
+              placeholder="e.g., a calm dog + predictable routine in 30 days"
+            />
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             <button
-              type="button"
-              onClick={onGenerate}
-              disabled={!canGenerate}
-              className={`rounded-2xl px-5 py-3 font-semibold ${
-                canGenerate
-                  ? "bg-amber-500 text-black hover:bg-amber-400"
-                  : "bg-white/10 text-white/40"
-              }`}
+              onClick={() => {
+                const built = buildEpisodes(inputs);
+                setEpisodes(built);
+                setActiveWeek(1);
+              }}
+              className="rounded-full bg-amber-500 px-6 py-3 text-sm font-bold text-black hover:bg-amber-400"
             >
-              {!isPaid ? "Generate my 3-month demo plan" : "Generate my 12-week plan"}
+              {paid ? "Generate my 3-month plan" : "Generate my demo 3-month plan"}
             </button>
 
-            <button
-              type="button"
-              onClick={onCopyPlan}
-              disabled={!plan}
-              className={`rounded-2xl px-5 py-3 font-semibold ${
-                plan ? "bg-white/10 text-white hover:bg-white/15" : "bg-white/5 text-white/30"
-              }`}
-            >
-              Copy plan
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Big empty space filler (your “cool lines”) */}
-      {!plan && (
-        <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-8 text-white/80">
-          <h2 className="text-xl font-semibold text-white">How this works</h2>
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-              <div className="text-sm text-white/60">1) Tell us the basics</div>
-              <div className="mt-2 font-semibold">Who it’s for + what outcome you deliver.</div>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-              <div className="text-sm text-white/60">2) Get Authority Episode Briefs</div>
-              <div className="mt-2 font-semibold">Triggers, angles, guest archetypes, and distribution plays.</div>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-              <div className="text-sm text-white/60">3) Turn each week into content</div>
-              <div className="mt-2 font-semibold">Use the interview questions and hooks to record fast.</div>
-            </div>
-          </div>
-
-          {!isPaid && (
-            <div className="mt-6 flex flex-col items-start justify-between gap-4 rounded-2xl border border-white/10 bg-black/30 p-5 md:flex-row md:items-center">
-              <div>
-                <div className="font-semibold text-white">Want the full version?</div>
-                <div className="text-white/60">
-                  Unlock all 12 weeks + save inspiration videos to each episode.
-                </div>
-              </div>
+            {episodes && (
               <button
-                type="button"
-                onClick={openStripe}
-                className="rounded-2xl bg-amber-500 px-5 py-3 font-semibold text-black hover:bg-amber-400"
+                onClick={() => {
+                  // Copy only what user can access in demo; all in paid mode.
+                  const allowed = episodes.slice(0, visibleWeeks);
+                  const text = allowed
+                    .map((e) => {
+                      return [
+                        `Week ${e.week}: ${e.title}`,
+                        ``,
+                        `Audience trigger: ${e.audienceTrigger}`,
+                        `Positioning angle: ${e.positioningAngle}`,
+                        `Host credibility moment: ${e.hostCredibilityMoment}`,
+                        `Guest archetype: ${e.guestArchetype}`,
+                        `Distribution play: ${e.distributionPlay}`,
+                        `Strategic outcome: ${e.strategicOutcome}`,
+                        `Interview questions:`,
+                        ...e.interviewQuestions.map((q) => `- ${q}`),
+                        ``,
+                      ].join("\n");
+                    })
+                    .join("\n");
+
+                  navigator.clipboard.writeText(text);
+                }}
+                className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
               >
-                Unlock the full 12 weeks
+                Copy plan
               </button>
+            )}
+
+            {!paid && (
+              <a
+                href={STRIPE_PAYMENT_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
+              >
+                Unlock full 12 weeks ($29)
+              </a>
+            )}
+          </div>
+
+          {!episodes && (
+            <div className="mt-8 rounded-2xl border border-white/10 bg-black/30 p-6 text-sm text-white/70">
+              <div className="text-white font-semibold">How to use this</div>
+              <ul className="mt-2 space-y-2">
+                <li>• Enter a few details about the show (audience + outcome).</li>
+                <li>• Generate your plan and skim Weeks 1–3.</li>
+                <li>• Use the interview questions to outline your episode fast.</li>
+                <li>• Unlock to get all 12 weeks + save inspiration videos per episode.</li>
+              </ul>
             </div>
           )}
         </div>
-      )}
+      </section>
 
       {/* Plan */}
-      {plan && (
-        <div className="mt-10">
-          {/* Tabs */}
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-            <div className="text-xs text-white/60">Your plan</div>
-            <div className="mt-2 text-2xl font-semibold text-white">
-              {showName || "(untitled)"} <span className="text-white/40">• {niche || "(niche)"}</span>
+      {episodes && (
+        <section className="relative mx-auto w-full max-w-6xl px-6 pb-20">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
+            <div className="text-sm text-white/60">Your plan</div>
+            <div className="mt-2 text-3xl font-extrabold tracking-tight">
+              {planTitle}
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2">
-              {Array.from({ length: 12 }).map((_, i) => {
-                const week = i + 1;
-                const locked = !isPaid && week > 3;
-                const active = week === activeWeek;
-
+            {/* Week tabs */}
+            <div className="mt-6 flex flex-wrap gap-2">
+              {episodes.map((e) => {
+                const locked = !paid && e.week > 3;
                 return (
                   <button
-                    key={week}
-                    type="button"
+                    key={e.week}
                     onClick={() => {
-                      if (locked) return;
-                      setActiveWeek(week);
+                      if (!locked) setActiveWeek(e.week);
                     }}
                     className={[
-                      "rounded-full px-4 py-2 text-sm font-semibold",
-                      active ? "bg-white text-black" : "bg-white/10 text-white/80 hover:bg-white/15",
-                      locked ? "opacity-40 cursor-not-allowed hover:bg-white/10" : "",
+                      "rounded-full px-4 py-2 text-sm font-semibold transition",
+                      locked
+                        ? "bg-white/5 text-white/25 cursor-not-allowed"
+                        : e.week === activeWeek
+                        ? "bg-white text-black"
+                        : "bg-white/10 text-white hover:bg-white/15",
                     ].join(" ")}
+                    title={locked ? "Locked in demo" : `Week ${e.week}`}
                   >
-                    Week {week}
+                    Week {e.week}
                   </button>
                 );
               })}
             </div>
 
-            {/* Demo unlock row (ONLY in demo) */}
-            {!isPaid && (
-              <div className="mt-6 flex flex-col items-start gap-3 rounded-2xl border border-white/10 bg-black/30 p-5 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-white/70">
-                  Demo shows Weeks 1–3.
+            {/* Inline upsell under week 3 only (demo) */}
+            {!paid && activeWeek === 3 && (
+              <div className="mt-6 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-white/80 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <span className="font-semibold text-white">Demo shows Weeks 1–3.</span>{" "}
+                  Unlock the full 12 weeks + save inspiration videos to each episode.
                 </div>
-                <button
-                  type="button"
-                  onClick={openStripe}
-                  className="rounded-2xl bg-amber-500 px-5 py-3 font-semibold text-black hover:bg-amber-400"
+                <a
+                  href={STRIPE_PAYMENT_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full bg-amber-500 px-5 py-2 text-sm font-bold text-black hover:bg-amber-400"
                 >
                   Unlock the full 12 weeks
-                </button>
+                </a>
               </div>
             )}
-          </div>
 
-          {/* Episode content */}
-          {activeEpisode && (
-            <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-8">
-              <div className="text-sm text-white/60">Week {activeEpisode.week}</div>
-              <h3 className="mt-2 text-3xl font-semibold text-white">{activeEpisode.title}</h3>
+            {/* Episode card */}
+            <div className="mt-6">
+              {(() => {
+                const episode = episodes.find((e) => e.week === activeWeek);
+                if (!episode) return null;
 
-              <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-                  <div className="text-xs text-white/60">Audience trigger</div>
-                  <div className="mt-2 text-white/85">{activeEpisode.audienceTrigger}</div>
-                </div>
+                const locked = !paid && episode.week > 3;
+                if (locked) {
+                  // Don’t show the old “Week 4 locked” big screen anymore.
+                  // Just keep user on week 3, but if they click later tabs, it won’t switch.
+                  return null;
+                }
 
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-                  <div className="text-xs text-white/60">Positioning angle</div>
-                  <div className="mt-2 text-white/85">{activeEpisode.positioningAngle}</div>
-                </div>
+                return (
+                  <div className="rounded-3xl border border-white/10 bg-black/30 p-8">
+                    <div className="text-sm text-white/60">Week {episode.week}</div>
+                    <h2 className="mt-2 text-3xl font-extrabold tracking-tight">
+                      {episode.title}
+                    </h2>
 
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-                  <div className="text-xs text-white/60">Host credibility moment</div>
-                  <div className="mt-2 text-white/85">{activeEpisode.hostCredibilityMoment}</div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-                  <div className="text-xs text-white/60">Guest archetype</div>
-                  <div className="mt-2 text-white/85">{activeEpisode.guestArchetype}</div>
-                  <div className="mt-3 text-xs text-white/60">Why this strengthens your authority</div>
-                  <div className="mt-2 text-white/80">{activeEpisode.whyGuestStrengthensAuthority}</div>
-                </div>
-
-                <div className="md:col-span-2 rounded-2xl border border-white/10 bg-black/30 p-5">
-                  <div className="text-xs text-white/60">Interview questions</div>
-                  <ul className="mt-3 list-disc space-y-2 pl-5 text-white/85">
-                    {activeEpisode.interviewQuestions.map((q, idx) => (
-                      <li key={idx}>{q}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-                  <div className="text-xs text-white/60">Distribution play</div>
-                  <div className="mt-3 text-sm text-white/70">Vertical hook idea</div>
-                  <div className="mt-1 text-white/85">{activeEpisode.distributionPlay.verticalHook}</div>
-
-                  <div className="mt-4 text-sm text-white/70">LinkedIn post angle</div>
-                  <div className="mt-1 text-white/85">{activeEpisode.distributionPlay.linkedinAngle}</div>
-
-                  <div className="mt-4 text-sm text-white/70">Newsletter angle</div>
-                  <div className="mt-1 text-white/85">{activeEpisode.distributionPlay.newsletterAngle}</div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-                  <div className="text-xs text-white/60">Strategic outcome</div>
-                  <div className="mt-2 text-white/85">{activeEpisode.strategicOutcome}</div>
-                </div>
-
-                {/* Optional: Inspiration section placeholder (works with your lib/inspiration.ts later) */}
-                <div className="md:col-span-2 rounded-2xl border border-white/10 bg-black/30 p-5">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <div className="text-xs text-white/60">Trending / inspirational videos in your niche</div>
-                      <div className="mt-1 text-white/70">
-                        (Optional) Add links you like, so this episode has creative references.
-                      </div>
+                    <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                      <Block title="Audience trigger" text={episode.audienceTrigger} />
+                      <Block title="Positioning angle" text={episode.positioningAngle} />
+                      <Block title="Host credibility moment" text={episode.hostCredibilityMoment} />
+                      <Block title="Guest archetype" text={episode.guestArchetype} />
+                      <Block title="Distribution play" text={episode.distributionPlay} />
+                      <Block title="Strategic outcome" text={episode.strategicOutcome} />
                     </div>
 
-                    {!isPaid && (
-                      <button
-                        type="button"
-                        onClick={openStripe}
-                        className="rounded-2xl bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/15"
-                      >
-                        Unlock to save videos
-                      </button>
-                    )}
+                    <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5">
+                      <div className="font-semibold text-white">Suggested interview questions</div>
+                      <ul className="mt-3 space-y-2 text-sm text-white/75">
+                        {episode.interviewQuestions.map((q, idx) => (
+                          <li key={idx}>• {q}</li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-
-                  <div className="mt-4 text-sm text-white/60">
-                    {isPaid
-                      ? "In paid mode you can search + save inspiration videos to this episode."
-                      : "Demo preview: saving inspiration videos is a paid feature."}
-                  </div>
-                </div>
-              </div>
-
-              {/* Under Week 3 in demo: gentle upgrade prompt (not the big “Week 4 locked” page) */}
-              {!isPaid && activeEpisode.week === 3 && (
-                <div className="mt-10 rounded-2xl border border-white/10 bg-black/30 p-6">
-                  <div className="text-white/80">
-                    Want Weeks 4–12 plus the full export + inspiration saving?
-                  </div>
-                  <button
-                    type="button"
-                    onClick={openStripe}
-                    className="mt-4 rounded-2xl bg-amber-500 px-5 py-3 font-semibold text-black hover:bg-amber-400"
-                  >
-                    Unlock the full 12 weeks
-                  </button>
-                </div>
-              )}
+                );
+              })()}
             </div>
-          )}
-        </div>
+          </div>
+        </section>
       )}
+
+      <footer className="relative mx-auto w-full max-w-6xl px-6 pb-10 text-xs text-white/50">
+        © {new Date().getFullYear()} Brian Kelsey Media
+      </footer>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  full,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  full?: boolean;
+}) {
+  return (
+    <label className={full ? "md:col-span-2" : ""}>
+      <div className="mb-2 text-sm text-white/70">{label}</div>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white placeholder:text-white/25 outline-none focus:border-amber-500/40"
+      />
+    </label>
+  );
+}
+
+function Block({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+      <div className="text-sm font-semibold text-white">{title}</div>
+      <div className="mt-2 text-sm leading-relaxed text-white/75">{text}</div>
     </div>
   );
 }

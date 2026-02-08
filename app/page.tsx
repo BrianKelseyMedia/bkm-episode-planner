@@ -1,8 +1,6 @@
-// app/page.tsx
 import Image from "next/image";
 import Link from "next/link";
-
-const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/fZu9AS9lG2Pt6IQdQLdAk0f";
+import { STRIPE_PAYMENT_LINK } from "@/lib/stripe";
 
 export default function HomePage() {
   return (
@@ -27,7 +25,9 @@ export default function HomePage() {
           />
           <div className="leading-tight">
             <div className="text-sm font-semibold">Brian Kelsey Media</div>
-            <div className="text-xs text-white/60">Premium video strategy + production</div>
+            <div className="text-xs text-white/60">
+              Premium video strategy + production
+            </div>
           </div>
         </div>
 
@@ -60,8 +60,9 @@ export default function HomePage() {
           </h1>
 
           <p className="mt-6 max-w-xl text-base leading-relaxed text-white/70">
-            Build a consistent content plan that feels intentional, premium, and on-brand. Designed
-            for professionals who want their show to drive trust, demand, and business.
+            Build a consistent content plan that feels intentional, premium, and
+            on-brand. Designed for professionals who want their show to drive
+            trust, demand, and business.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -72,15 +73,15 @@ export default function HomePage() {
               Try the demo
             </Link>
 
-            {/* ✅ Paid button now goes to Stripe (NO paid=1 bypass) */}
-            <a
-              href={STRIPE_CHECKOUT_URL}
+            {/* IMPORTANT: buy now goes to Stripe (NOT /planner?paid=1) */}
+            <Link
+              href={STRIPE_PAYMENT_LINK}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
             >
               Buy the Full Version ($29)
-            </a>
+            </Link>
           </div>
 
           <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-6">

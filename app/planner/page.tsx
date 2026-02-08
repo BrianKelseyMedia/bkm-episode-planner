@@ -7,8 +7,8 @@ export default function PlannerPage() {
       <Suspense
         fallback={
           <div className="mx-auto max-w-6xl px-6 py-16">
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-10">
-              Loading planner…
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-white/70">
+              Loading planner...
             </div>
           </div>
         }
