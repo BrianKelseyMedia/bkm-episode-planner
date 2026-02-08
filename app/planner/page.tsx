@@ -1,25 +1,20 @@
 import { Suspense } from "react";
 import PlannerClient from "./PlannerClient";
 
-export default function PlannerPage({
-  searchParams,
-}: {
-  searchParams?: { [key: string]: string | string[] | undefined };
-}) {
-  const paidParam = searchParams?.paid;
-  const paid =
-    paidParam === "1" ||
-    (Array.isArray(paidParam) && paidParam.includes("1"));
-
+export default function PlannerPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-black text-white flex items-center justify-center">
-          Loading planner...
-        </div>
-      }
-    >
-      <PlannerClient paid={paid} />
-    </Suspense>
+    <main className="min-h-screen bg-black text-white">
+      <Suspense
+        fallback={
+          <div className="mx-auto max-w-6xl px-6 py-16">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-10">
+              Loading planner…
+            </div>
+          </div>
+        }
+      >
+        <PlannerClient />
+      </Suspense>
+    </main>
   );
 }

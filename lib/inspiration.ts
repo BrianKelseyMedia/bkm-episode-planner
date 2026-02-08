@@ -1,65 +1,35 @@
-export type InspirationPlatform = "youtube" | "tiktok" | "instagram";
-
 export type InspirationItem = {
-  id: string;
-  platform: InspirationPlatform;
+  platform: "YouTube" | "TikTok" | "Instagram";
   title: string;
-  creator: string;
-  whyItWorks: string;
-  url: string; // can be a platform search URL, or a specific link
+  url: string;
 };
 
-export function makeInspirationQuery(niche: string, episodeTitle: string) {
-  const q = `${niche} ${episodeTitle} tips`;
-  return encodeURIComponent(q);
+function buildSearchUrl(platform: InspirationItem["platform"], niche: string, topic: string) {
+  const q = encodeURIComponent(`${niche} ${topic}`);
+  if (platform === "YouTube") return `https://www.youtube.com/results?search_query=${q}`;
+  if (platform === "TikTok") return `https://www.tiktok.com/search?q=${q}`;
+  return `https://www.instagram.com/explore/tags/${encodeURIComponent(niche.replace(/\s+/g, ""))}/`;
 }
 
-export function generateInspirations(args: {
-  niche: string;
-  episodeTitle: string;
-  positioningAngle: string;
-}): InspirationItem[] {
-  const { niche, episodeTitle, positioningAngle } = args;
-  const q = makeInspirationQuery(niche, episodeTitle);
+export function getInspirationPack(niche: string, topic: string): InspirationItem[] {
+  const n = (niche || "your niche").trim();
+  const t = (topic || "topic").trim();
 
-  // These are “search URLs” by default (works everywhere, no scraping).
-  const youtubeSearch = `https://www.youtube.com/results?search_query=${q}`;
-  const tiktokSearch = `https://www.tiktok.com/search?q=${q}`;
-  const instagramSearch = `https://www.instagram.com/explore/search/keyword/?q=${q}`;
-
-  const seed = `${niche}|${episodeTitle}|${positioningAngle}`.length;
-
-  const variants = [
+  return [
     {
-      platform: "youtube" as const,
-      title: `3-minute breakdown: ${episodeTitle}`,
-      creator: "Creator in your niche",
-      whyItWorks:
-        "Clear promise in the first 5 seconds, tight structure, and one punchy takeaway.",
-      url: youtubeSearch,
+      platform: "YouTube",
+      title: `Top performing YouTube videos: ${t}`,
+      url: buildSearchUrl("YouTube", n, t),
     },
     {
-      platform: "tiktok" as const,
-      title: `Hot take hook: “Most people get this wrong…”`,
-      creator: "Operator / practitioner",
-      whyItWorks:
-        "Starts with tension, uses fast examples, ends with a single behavior change.",
-      url: tiktokSearch,
+      platform: "TikTok",
+      title: `Trending TikToks to model: ${t}`,
+      url: buildSearchUrl("TikTok", n, t),
     },
     {
-      platform: "instagram" as const,
-      title: `Carousel-to-reel hybrid: the checklist version`,
-      creator: "Authority account",
-      whyItWorks:
-        "Turns the episode into an easy-to-save format, perfect for repurposing.",
-      url: instagramSearch,
+      platform: "Instagram",
+      title: `High-performing Reels ideas for: ${n}`,
+      url: buildSearchUrl("Instagram", n, t),
     },
   ];
-
-  // Tiny deterministic shuffle so episodes don’t all look identical
-  const rotate = seed % variants.length;
-  return [...variants.slice(rotate), ...variants.slice(0, rotate)].map((v) => ({
-    ...v,
-    id: `${v.platform}-${seed}-${Math.abs(seed * 97)}`,
-  }));
 }
