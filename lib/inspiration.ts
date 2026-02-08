@@ -1,85 +1,65 @@
-export type InspirationVideo = {
+export type InspirationPlatform = "youtube" | "tiktok" | "instagram";
+
+export type InspirationItem = {
+  id: string;
+  platform: InspirationPlatform;
   title: string;
-  thumbnail: string; // absolute URL or /public path
-  url: string;
-  source: string; // e.g. "YouTube", "TikTok", "Instagram"
+  creator: string;
+  whyItWorks: string;
+  url: string; // can be a platform search URL, or a specific link
 };
 
-/**
- * NOTE:
- * This is a "curated mock" generator (no API calls).
- * Later, you can swap this function to real search (YouTube API, SerpAPI, etc.)
- * without touching the UI.
- */
-const FALLBACK: InspirationVideo[] = [
-  {
-    title: "How to structure a strong hook in the first 7 seconds",
-    thumbnail: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&q=80&auto=format&fit=crop",
-    url: "https://www.youtube.com/results?search_query=podcast+hook+first+seconds",
-    source: "YouTube",
-  },
-  {
-    title: "Simple A/B testing of titles (and why most people get it wrong)",
-    thumbnail: "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=1200&q=80&auto=format&fit=crop",
-    url: "https://www.youtube.com/results?search_query=better+podcast+titles+ab+testing",
-    source: "YouTube",
-  },
-  {
-    title: "High-retention editing patterns you can copy this week",
-    thumbnail: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1200&q=80&auto=format&fit=crop",
-    url: "https://www.youtube.com/results?search_query=retention+editing+patterns+reels",
-    source: "YouTube",
-  },
-];
-
-function safeSlug(s: string) {
-  return (s || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, "")
-    .trim()
-    .replace(/\s+/g, "+");
+export function makeInspirationQuery(niche: string, episodeTitle: string) {
+  const q = `${niche} ${episodeTitle} tips`;
+  return encodeURIComponent(q);
 }
 
-export function getInspirationalVideosForEpisode(
-  niche: string,
-  episodeTitle: string
-): InspirationVideo[] {
-  const qNiche = safeSlug(niche);
-  const qTitle = safeSlug(episodeTitle);
+export function generateInspirations(args: {
+  niche: string;
+  episodeTitle: string;
+  positioningAngle: string;
+}): InspirationItem[] {
+  const { niche, episodeTitle, positioningAngle } = args;
+  const q = makeInspirationQuery(niche, episodeTitle);
 
-  // Build “search links” that feel real even without APIs.
-  const youtubeQuery = `https://www.youtube.com/results?search_query=${qNiche}+${qTitle}+podcast`;
-  const tiktokQuery = `https://www.tiktok.com/search?q=${qNiche}%20${qTitle}`;
-  const instagramQuery = `https://www.instagram.com/explore/tags/${(niche || "podcast")
-    .toLowerCase()
-    .replace(/\s+/g, "")}/`;
+  // These are “search URLs” by default (works everywhere, no scraping).
+  const youtubeSearch = `https://www.youtube.com/results?search_query=${q}`;
+  const tiktokSearch = `https://www.tiktok.com/search?q=${q}`;
+  const instagramSearch = `https://www.instagram.com/explore/search/keyword/?q=${q}`;
 
-  const generated: InspirationVideo[] = [
+  const seed = `${niche}|${episodeTitle}|${positioningAngle}`.length;
+
+  const variants = [
     {
-      title: `Trending takes on: ${episodeTitle}`,
-      thumbnail:
-        "https://images.unsplash.com/photo-1526948128573-703ee1aeb6fa?w=1200&q=80&auto=format&fit=crop",
-      url: youtubeQuery,
-      source: "YouTube",
+      platform: "youtube" as const,
+      title: `3-minute breakdown: ${episodeTitle}`,
+      creator: "Creator in your niche",
+      whyItWorks:
+        "Clear promise in the first 5 seconds, tight structure, and one punchy takeaway.",
+      url: youtubeSearch,
     },
     {
-      title: `Short-form formats people are copying in ${niche || "your niche"}`,
-      thumbnail:
-        "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=1200&q=80&auto=format&fit=crop",
-      url: tiktokQuery,
-      source: "TikTok",
+      platform: "tiktok" as const,
+      title: `Hot take hook: “Most people get this wrong…”`,
+      creator: "Operator / practitioner",
+      whyItWorks:
+        "Starts with tension, uses fast examples, ends with a single behavior change.",
+      url: tiktokSearch,
     },
     {
-      title: `Visual style + thumbnails that work right now`,
-      thumbnail:
-        "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&q=80&auto=format&fit=crop",
-      url: instagramQuery,
-      source: "Instagram",
+      platform: "instagram" as const,
+      title: `Carousel-to-reel hybrid: the checklist version`,
+      creator: "Authority account",
+      whyItWorks:
+        "Turns the episode into an easy-to-save format, perfect for repurposing.",
+      url: instagramSearch,
     },
   ];
 
-  // If niche/title are empty, return a stable fallback.
-  if (!niche?.trim() || !episodeTitle?.trim()) return FALLBACK;
-
-  return generated;
+  // Tiny deterministic shuffle so episodes don’t all look identical
+  const rotate = seed % variants.length;
+  return [...variants.slice(rotate), ...variants.slice(0, rotate)].map((v) => ({
+    ...v,
+    id: `${v.platform}-${seed}-${Math.abs(seed * 97)}`,
+  }));
 }

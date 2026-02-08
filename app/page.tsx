@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const PRICE = 29;
 const CHECKOUT_URL = "https://buy.stripe.com/fZu9AS9lG2Pt6IQdQLdAk0f";
 
 export default function HomePage() {
@@ -17,23 +16,21 @@ export default function HomePage() {
       <header className="relative border-b border-white/10">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            {/* ✅ Smaller logo */}
             <Image
               src="/bkm-logo.png"
               alt="Brian Kelsey Media"
-              width={180}
-              height={50}
-              className="h-9 w-auto"
+              width={240}
+              height={70}
+              className="h-11 w-auto"
               priority
             />
-
-            {/* ✅ Larger tagline */}
-            <span className="hidden sm:block text-base font-semibold tracking-wide text-zinc-200">
+            <span className="hidden sm:block text-sm font-medium text-zinc-300">
               Premium video strategy + production
             </span>
           </div>
 
           <div className="flex items-center gap-3">
+            {/* MATCH the top-right button style + wording */}
             <Link
               href="/planner"
               className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition"
@@ -45,7 +42,7 @@ export default function HomePage() {
               href={CHECKOUT_URL}
               className="inline-flex items-center justify-center rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-black hover:bg-amber-400 transition"
             >
-              Buy the Full Version (${PRICE})
+              Buy the Full Version ($29)
             </Link>
           </div>
         </div>
@@ -63,50 +60,49 @@ export default function HomePage() {
 
             <h1 className="text-4xl font-bold leading-tight sm:text-5xl">
               12-Week Episode Planner{" "}
-              <span className="text-zinc-400">for authority-driven shows.</span>
+              <span className="block text-2xl sm:text-3xl font-semibold text-zinc-400 mt-2">
+                for authority driven shows.
+              </span>
             </h1>
 
             <p className="mt-6 max-w-xl text-zinc-300">
-              Build a consistent content plan that feels intentional, premium, and on-brand.
-              Designed for professionals who want their show to drive trust, demand, and business.
+              Build a consistent content plan that feels intentional, premium, and
+              on-brand. Designed for professionals who want their show to drive
+              trust, demand, and business.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
+              {/* MATCH wording with top-right: "Try the demo" */}
               <Link
                 href="/planner"
-                className="inline-flex items-center justify-center rounded-xl bg-amber-500 px-6 py-3 text-sm font-semibold text-black hover:bg-amber-400 transition"
+                className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 transition"
               >
-                Start the planner
+                Try the demo
               </Link>
 
               <Link
                 href={CHECKOUT_URL}
-                className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 transition"
+                className="inline-flex items-center justify-center rounded-xl bg-amber-500 px-6 py-3 text-sm font-semibold text-black hover:bg-amber-400 transition"
               >
-                Buy the Full Version (${PRICE})
+                Buy the Full Version ($29)
               </Link>
             </div>
 
             <div className="mt-10 rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-sm text-zinc-300">
-              <div className="mb-2 font-semibold text-white">What you get in 12 weeks:</div>
+              <div className="font-semibold text-white mb-2">
+                What you get in 12 weeks:
+              </div>
               <ul className="space-y-1">
                 <li>• A repeatable structure (not random topics)</li>
-                <li>• Clear episode angles and hooks</li>
-                <li>• A premium authority feel across the series</li>
-                <li>• Guest archetypes + prompts that make the host look sharp</li>
-                <li>• Distribution angles for vertical, LinkedIn, and newsletter</li>
+                <li>• “Authority Episode Briefs” (audience trigger → positioning → distribution)</li>
+                <li>• Guest archetypes that make the host look sharp</li>
               </ul>
-
-              <div className="mt-4 text-xs text-zinc-400">
-                Demo preview shows Weeks 1–3. Full version unlocks Weeks 1–12 + copy/export.
-              </div>
             </div>
           </div>
 
           {/* Right image */}
           <div className="relative">
-            {/* ✅ Slightly smaller image container so it feels cleaner */}
-            <div className="mx-auto max-w-[520px] overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-3">
+            <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-3">
               <Image
                 src="/bkm-hero.png"
                 alt="Brian Kelsey"
