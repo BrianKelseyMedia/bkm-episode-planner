@@ -1,23 +1,32 @@
 // lib/stripe.ts
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2024-06-20",
-});
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
 
-export async function verifyCheckoutSession(sessionId: string) {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error("Missing STRIPE_SECRET_KEY environment variable.");
+  // IMPORTANT:
+  // Do NOT throw at module import time (breaks Vercel builds).
+  // Only throw when a Stripe function is actually called.
+  if (!key) {
+    throw new Error("Missing STRIPE_SECRET_KEY env var on server.");
   }
 
-  const session = await stripe.checkout.sessions.retrieve(sessionId);
+  return new Stripe(key, {
+    apiVersion: "2024-06-20",
+  });
+}
 
-  // We only accept fully paid sessions
+export async function verifyCheckoutSession(sessionId: string) {
+  const stripe = getStripe();
+
+  // Expand payment_intent so we can check status reliably
+  const session = await stripe.checkout.sessions.retrieve(sessionId, {
+    expand: ["payment_intent"],
+  });
+
+  // A session is “paid” if payment_status === 'paid'
+  // (This is the simplest + correct for most Checkout flows)
   const isPaid = session.payment_status === "paid";
 
-  return {
-    isPaid,
-    id: session.id,
-    customer_email: session.customer_details?.email || session.customer_email || null,
-  };
+  return { isPaid, session };
 }
