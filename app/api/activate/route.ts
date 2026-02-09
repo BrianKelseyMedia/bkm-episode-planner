@@ -14,17 +14,15 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ verifyCheckoutSession returns { paid, customerEmail }
-    const { paid } = await verifyCheckoutSession(sessionId);
+    const { paid, error } = await verifyCheckoutSession(sessionId);
 
     if (!paid) {
       return NextResponse.json(
-        { ok: false, error: "Payment not verified" },
+        { ok: false, error: error || "Payment not verified" },
         { status: 403 }
       );
     }
 
-    // ✅ Tell the client to set the paid cookie (we set cookie in success-client)
     return NextResponse.json({ ok: true });
   } catch (err: any) {
     return NextResponse.json(
