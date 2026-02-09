@@ -14,7 +14,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const { paid, error } = await verifyCheckoutSession(sessionId);
+    const { paid } = await verifyCheckoutSession(sessionId);
+
 
     if (!paid) {
       return NextResponse.json(
