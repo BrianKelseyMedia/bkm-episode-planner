@@ -45,6 +45,9 @@ export default function SuccessClient() {
 
   return (
     <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
+        <div className="text-xs text-pink-400 mb-4">
+      LIVE MARKER – SUCCESS PAGE
+    </div>
       <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-white/5 p-8 text-center">
         <h1 className="text-3xl font-extrabold">
           You’re all set.
