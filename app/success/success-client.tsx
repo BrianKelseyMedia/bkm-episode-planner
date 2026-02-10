@@ -1,41 +1,46 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
-export default function SuccessClient() {
-  const params = useSearchParams();
+export default function SuccessClient({
+  sessionId,
+}: {
+  sessionId: string;
+}) {
   const router = useRouter();
 
-  const sessionId = params.get("session_id");
-
-  const [activating, setActivating] = useState(true);
+  const [activating, setActivating] = useState(false);
+  const [activated, setActivated] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!sessionId) {
-      setError("Missing session information.");
-      setActivating(false);
+      setError("Missing session id");
       return;
     }
 
     const run = async () => {
       try {
+        setActivating(true);
+
         const res = await fetch("/api/activate", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
           body: JSON.stringify({ sessionId }),
         });
 
-        const json = await res.json();
-
-        if (!res.ok || !json.ok) {
-          throw new Error(json.error || "Activation failed");
+        if (!res.ok) {
+          throw new Error("Activation failed");
         }
 
-        setActivating(false);
-      } catch (e: any) {
-        setError(e.message || "Activation failed");
+        setActivated(true);
+      } catch (e) {
+        setError("Activation failed");
+      } finally {
         setActivating(false);
       }
     };
@@ -44,40 +49,39 @@ export default function SuccessClient() {
   }, [sessionId]);
 
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
-        <div className="text-xs text-pink-400 mb-4">
-      LIVE MARKER – SUCCESS PAGE
-    </div>
-      <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-white/5 p-8 text-center">
-        <h1 className="text-3xl font-extrabold">
-          You’re all set.
-        </h1>
+    <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-white/5 p-8 text-center">
+      <h1 className="text-3xl font-extrabold">
+        Payment received.
+      </h1>
 
+      {!activated && !error && (
         <p className="mt-4 text-white/70">
-          Your full 12-week episode planner is now unlocked.
+          One moment…
         </p>
+      )}
 
-        {activating && (
-          <p className="mt-6 text-sm text-white/60">
-            Finalizing your access…
-          </p>
-        )}
+      {error && (
+        <p className="mt-4 text-red-400">
+          {error}
+        </p>
+      )}
 
-        {error && (
-          <p className="mt-6 text-sm text-red-400">
-            {error}
-          </p>
-        )}
+      <div className="mt-8 flex justify-center gap-4">
+        <button
+          disabled={!activated}
+          onClick={() => router.push("/planner")}
+          className="rounded-full bg-yellow-400 px-6 py-3 font-semibold text-black disabled:opacity-50"
+        >
+          Open full version
+        </button>
 
-        {!activating && !error && (
-          <button
-            onClick={() => router.push("/planner")}
-            className="mt-8 inline-flex items-center justify-center rounded-full bg-amber-500 px-8 py-3 text-sm font-bold text-black hover:bg-amber-400"
-          >
-            Open your episode planner
-          </button>
-        )}
+        <button
+          onClick={() => router.push("/")}
+          className="rounded-full border border-white/20 px-6 py-3"
+        >
+          Back home
+        </button>
       </div>
-    </main>
+    </div>
   );
 }
