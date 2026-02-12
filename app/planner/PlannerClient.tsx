@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/fZu9AS9lG2Pt6IQdQLdAk0f";
+import { STRIPE_PAYMENT_LINK } from "@/lib/links";
 
 type InspirationItem = {
   id: string;
@@ -106,15 +106,15 @@ function generatePlan(inputs: {
       week,
       title,
 
-      audienceTrigger: `Your audience (${whoFor}) is stuck in "${problem}" and doesn’t realize the bigger risk is what they’re *not* addressing yet.`,
+      audienceTrigger: `Your audience (${whoFor}) is stuck in "${problem}" and doesn't realize the bigger risk is what they're *not* addressing yet.`,
       positioningAngle: `Instead of generic tips, frame the decision-making that reliably creates "${outcome}" in ${niche}.`,
-      hostCredibilityMoment: `Insert a 20–30 second credibility moment: what you’ve seen in the field (clients, production, founders, firms), what you changed, and the result.`,
+      hostCredibilityMoment: `Insert a 20–30 second credibility moment: what you've seen in the field (clients, production, founders, firms), what you changed, and the result.`,
 
-      guestArchetype: `Guest archetype: a practitioner who has lived this and has scars + lessons (not a generic “expert”).`,
+      guestArchetype: `Guest archetype: a practitioner who has lived this and has scars + lessons (not a generic "expert").`,
       whyThisGuestStrengthensAuthority: `You look like the strategic guide: you define the problem, the guest validates it with lived experience, and you close with your framework.`,
 
       distribution: {
-        verticalHook: `“If you’re dealing with ${problem}, stop doing *this* first.”`,
+        verticalHook: `"If you're dealing with ${problem}, stop doing *this* first."`,
         linkedinAngle: `The uncomfortable truth about ${problem} (and why most advice fails).`,
         newsletterAngle: `One mindset shift that gets you closer to ${outcome} this week.`,
       },
@@ -123,10 +123,10 @@ function generatePlan(inputs: {
 
       interviewQuestions: [
         `When did you first realize "${problem}" was the real bottleneck?`,
-        `What did you try first that *didn’t* work — and why?`,
+        `What did you try first that *didn't* work — and why?`,
         `What was the first change that actually moved the needle?`,
-        `What’s the hidden constraint most people miss?`,
-        `What’s a simple next step someone can take in the next 7 days toward "${outcome}"?`,
+        `What's the hidden constraint most people miss?`,
+        `What's a simple next step someone can take in the next 7 days toward "${outcome}"?`,
       ],
 
       inspiration: baseInspo(title),
@@ -142,18 +142,15 @@ function getStorageKey(showName: string) {
 export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
   const maxUnlockedWeek = useMemo(() => (isPaid ? 12 : 3), [isPaid]);
 
-  // Inputs (start EMPTY; placeholders are blank)
   const [showName, setShowName] = useState("");
   const [niche, setNiche] = useState("");
   const [whoFor, setWhoFor] = useState("");
   const [problem, setProblem] = useState("");
   const [outcome, setOutcome] = useState("");
 
-  // Plan state
   const [plan, setPlan] = useState<EpisodeBrief[] | null>(null);
   const [activeWeek, setActiveWeek] = useState<number>(1);
 
-  // Load saved plan PER SHOW NAME only after user types show name
   useEffect(() => {
     if (!safeText(showName)) return;
 
@@ -171,7 +168,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
     }
   }, [showName, isPaid]);
 
-  // Persist plan when it changes (only if show name exists)
   useEffect(() => {
     if (!plan) return;
     if (!safeText(showName)) return;
@@ -204,7 +200,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
   function handleCopy() {
     if (!plan) return;
 
-    // Copy only what’s unlocked
     const unlocked = plan.slice(0, maxUnlockedWeek);
 
     const text = unlocked
@@ -288,7 +283,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
       const ep = next[idx];
       if (!ep) return prev;
 
-      // prevent duplicates by url
       if (ep.inspiration.some((x) => x.url === item.url)) return prev;
 
       next[idx] = {
@@ -412,7 +406,7 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
           </button>
 
           {!isPaid && (
-            <a
+            
               href={STRIPE_PAYMENT_LINK}
               className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
             >
@@ -430,7 +424,7 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
           </div>
 
           {!isPaid && plan && (
-            <a
+            
               href={STRIPE_PAYMENT_LINK}
               className="rounded-full bg-amber-500 px-5 py-2 text-sm font-bold text-black hover:bg-amber-400"
             >
@@ -470,10 +464,11 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
           <div className="mt-8 rounded-2xl border border-white/10 bg-black/20 p-6 text-white/70">
             <div className="text-lg font-semibold text-white">Add your show details above.</div>
             <div className="mt-2">
-              Then click <span className="font-semibold text-white">Generate</span> to get your first 3 weeks (demo) as Authority Episode Briefs.
+              Then click <span className="font-semibold text-white">Generate</span> to get your{" "}
+              {isPaid ? "full 12-week plan" : "first 3 weeks (demo)"} as Authority Episode Briefs.
             </div>
             <div className="mt-4 text-white/60">
-              You’ll get structure, positioning angles, guest archetypes, distribution plays, interview questions, and inspiration you can save per episode.
+              You'll get structure, positioning angles, guest archetypes, distribution plays, interview questions, and inspiration you can save per episode.
             </div>
           </div>
         )}
@@ -568,7 +563,7 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
                       <div>
                         <div className="text-xs text-white/60">{v.platform}</div>
                         <div className="text-sm font-semibold">{v.title}</div>
-                        <a
+                        
                           href={v.url}
                           target="_blank"
                           rel="noreferrer"
@@ -599,7 +594,7 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
                 {!isPaid && (
                   <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/70">
                     Demo includes Weeks 1–3. Want Weeks 4–12 + export?{" "}
-                    <a
+                    
                       className="font-semibold text-white underline decoration-white/20 underline-offset-4"
                       href={STRIPE_PAYMENT_LINK}
                     >
@@ -613,12 +608,12 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
           </div>
         )}
 
-        {/* Locked week view (clean; no giant “LOCKED” blocks) */}
+        {/* Locked week view */}
         {!isPaid && plan && activeWeek > 3 && (
           <div className="mt-8 rounded-2xl border border-white/10 bg-black/20 p-6 text-white/70">
             <div className="text-lg font-semibold text-white">Week {activeWeek} is part of the full version.</div>
             <div className="mt-2">Unlock Weeks 4–12 to view, copy, and export the full plan.</div>
-            <a
+            
               href={STRIPE_PAYMENT_LINK}
               className="mt-4 inline-flex rounded-full bg-amber-500 px-6 py-3 text-sm font-bold text-black hover:bg-amber-400"
             >
@@ -630,3 +625,8 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
     </div>
   );
 }
+```
+
+Then push with:
+```
+git add app/planner/PlannerClient.tsx && git commit -m "Fix: show correct week count in empty state based on paid status" && git push
