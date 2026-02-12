@@ -15,24 +15,18 @@ type InspirationItem = {
 type EpisodeBrief = {
   week: number;
   title: string;
-
   audienceTrigger: string;
   positioningAngle: string;
   hostCredibilityMoment: string;
-
   guestArchetype: string;
   whyThisGuestStrengthensAuthority: string;
-
   distribution: {
     verticalHook: string;
     linkedinAngle: string;
     newsletterAngle: string;
   };
-
   strategicOutcome: string;
-
   interviewQuestions: string[];
-
   inspiration: InspirationItem[];
 };
 
@@ -105,22 +99,17 @@ function generatePlan(inputs: {
     return {
       week,
       title,
-
       audienceTrigger: `Your audience (${whoFor}) is stuck in "${problem}" and doesn't realize the bigger risk is what they're *not* addressing yet.`,
       positioningAngle: `Instead of generic tips, frame the decision-making that reliably creates "${outcome}" in ${niche}.`,
       hostCredibilityMoment: `Insert a 20–30 second credibility moment: what you've seen in the field (clients, production, founders, firms), what you changed, and the result.`,
-
       guestArchetype: `Guest archetype: a practitioner who has lived this and has scars + lessons (not a generic "expert").`,
       whyThisGuestStrengthensAuthority: `You look like the strategic guide: you define the problem, the guest validates it with lived experience, and you close with your framework.`,
-
       distribution: {
         verticalHook: `"If you're dealing with ${problem}, stop doing *this* first."`,
         linkedinAngle: `The uncomfortable truth about ${problem} (and why most advice fails).`,
         newsletterAngle: `One mindset shift that gets you closer to ${outcome} this week.`,
       },
-
       strategicOutcome: `Trust + repositioning + objection removal. After this episode, the audience should believe "${outcome}" is realistic with the right structure.`,
-
       interviewQuestions: [
         `When did you first realize "${problem}" was the real bottleneck?`,
         `What did you try first that *didn't* work — and why?`,
@@ -128,7 +117,6 @@ function generatePlan(inputs: {
         `What's the hidden constraint most people miss?`,
         `What's a simple next step someone can take in the next 7 days toward "${outcome}"?`,
       ],
-
       inspiration: baseInspo(title),
     };
   });
@@ -147,13 +135,11 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
   const [whoFor, setWhoFor] = useState("");
   const [problem, setProblem] = useState("");
   const [outcome, setOutcome] = useState("");
-
   const [plan, setPlan] = useState<EpisodeBrief[] | null>(null);
   const [activeWeek, setActiveWeek] = useState<number>(1);
 
   useEffect(() => {
     if (!safeText(showName)) return;
-
     const key = getStorageKey(showName);
     try {
       const raw = localStorage.getItem(key);
@@ -163,21 +149,16 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
         setPlan(parsed);
         setActiveWeek((w) => clamp(w, 1, isPaid ? 12 : 3));
       }
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [showName, isPaid]);
 
   useEffect(() => {
     if (!plan) return;
     if (!safeText(showName)) return;
-
     const key = getStorageKey(showName);
     try {
       localStorage.setItem(key, JSON.stringify(plan));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [plan, showName]);
 
   const visibleWeeks = useMemo(() => Array.from({ length: 12 }).map((_, i) => i + 1), []);
@@ -199,9 +180,7 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
 
   function handleCopy() {
     if (!plan) return;
-
     const unlocked = plan.slice(0, maxUnlockedWeek);
-
     const text = unlocked
       .map((ep) =>
         [
@@ -232,21 +211,18 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
         ].join("\n")
       )
       .join("\n");
-
     navigator.clipboard.writeText(text);
     alert(isPaid ? "Copied full 12-week plan." : "Copied Weeks 1–3 (demo).");
   }
 
   function refreshIdeasForWeek(week: number) {
     if (!plan) return;
-
     setPlan((prev) => {
       if (!prev) return prev;
       const next = [...prev];
       const idx = week - 1;
       const ep = next[idx];
       if (!ep) return prev;
-
       const fresh: InspirationItem[] = [
         {
           id: makeId("yt"),
@@ -267,7 +243,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
           url: "https://www.instagram.com/",
         },
       ];
-
       next[idx] = { ...ep, inspiration: fresh };
       return next;
     });
@@ -275,16 +250,13 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
 
   function saveInspirationToEpisode(week: number, item: InspirationItem) {
     if (!plan) return;
-
     setPlan((prev) => {
       if (!prev) return prev;
       const next = [...prev];
       const idx = week - 1;
       const ep = next[idx];
       if (!ep) return prev;
-
       if (ep.inspiration.some((x) => x.url === item.url)) return prev;
-
       next[idx] = {
         ...ep,
         inspiration: [{ ...item, id: makeId("saved") }, ...ep.inspiration],
@@ -295,14 +267,12 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
 
   function removeInspirationFromEpisode(week: number, id: string) {
     if (!plan) return;
-
     setPlan((prev) => {
       if (!prev) return prev;
       const next = [...prev];
       const idx = week - 1;
       const ep = next[idx];
       if (!ep) return prev;
-
       next[idx] = {
         ...ep,
         inspiration: ep.inspiration.filter((x) => x.id !== id),
@@ -313,21 +283,17 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12 text-white">
-      {/* Header */}
       <div className="mb-8">
         <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
           <span className="h-2 w-2 rounded-full bg-amber-400" />
           Episode Planner
         </div>
-
         <h1 className="mt-4 text-5xl font-extrabold tracking-tight">Welcome to your episode planner.</h1>
-
         <p className="mt-4 max-w-3xl text-white/70">
           Answer a few quick questions and generate a 12-week plan as{" "}
           <span className="font-semibold text-white">Authority Episode Briefs</span> (trigger, positioning, credibility moment,
           guest archetype, distribution plays, interview questions, plus inspiration you can save to each episode).
         </p>
-
         {!isPaid && (
           <div className="mt-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
             Demo preview shows <span className="font-semibold">Weeks 1–3</span>. Unlock to view/export Weeks 4–12.
@@ -335,7 +301,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
         )}
       </div>
 
-      {/* Inputs */}
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
@@ -347,7 +312,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
               className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none placeholder:text-white/20"
             />
           </div>
-
           <div>
             <label className="text-sm text-white/70">Niche / audience category</label>
             <input
@@ -357,7 +321,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
               className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none placeholder:text-white/20"
             />
           </div>
-
           <div className="md:col-span-2">
             <label className="text-sm text-white/70">Who is this show for?</label>
             <input
@@ -367,7 +330,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
               className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none placeholder:text-white/20"
             />
           </div>
-
           <div>
             <label className="text-sm text-white/70">What problem do you solve?</label>
             <input
@@ -377,7 +339,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
               className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none placeholder:text-white/20"
             />
           </div>
-
           <div>
             <label className="text-sm text-white/70">What outcome do you promise?</label>
             <input
@@ -396,7 +357,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
           >
             {isPaid ? "Generate my 12-week plan" : "Generate my 3-month plan (demo)"}
           </button>
-
           <button
             onClick={handleCopy}
             disabled={!plan}
@@ -404,7 +364,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
           >
             Copy plan
           </button>
-
           {!isPaid && (
             
               href={STRIPE_PAYMENT_LINK}
@@ -416,13 +375,11 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
         </div>
       </div>
 
-      {/* Output */}
       <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm text-white/70">
             Unlocked: <span className="font-semibold text-white">Weeks 1–{maxUnlockedWeek}</span>
           </div>
-
           {!isPaid && plan && (
             
               href={STRIPE_PAYMENT_LINK}
@@ -433,7 +390,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
           )}
         </div>
 
-        {/* Week tabs */}
         <div className="mt-6 flex flex-wrap gap-2">
           {visibleWeeks.map((w) => {
             const locked = isLockedWeek(w);
@@ -475,37 +431,30 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
 
         {plan && active && active.week <= maxUnlockedWeek && (
           <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* Left: core brief */}
             <div className="rounded-3xl border border-white/10 bg-black/20 p-6">
               <div className="text-sm text-white/60">Week {active.week}</div>
               <h2 className="mt-2 text-2xl font-extrabold">{active.title}</h2>
-
               <div className="mt-6 space-y-4 text-sm text-white/75">
                 <div>
                   <div className="font-semibold text-white">Audience trigger</div>
                   <div className="mt-1">{active.audienceTrigger}</div>
                 </div>
-
                 <div>
                   <div className="font-semibold text-white">Positioning angle</div>
                   <div className="mt-1">{active.positioningAngle}</div>
                 </div>
-
                 <div>
                   <div className="font-semibold text-white">Host credibility moment</div>
                   <div className="mt-1">{active.hostCredibilityMoment}</div>
                 </div>
-
                 <div>
                   <div className="font-semibold text-white">Guest suggestion (archetype)</div>
                   <div className="mt-1">{active.guestArchetype}</div>
                 </div>
-
                 <div>
                   <div className="font-semibold text-white">Why this guest strengthens your authority</div>
                   <div className="mt-1">{active.whyThisGuestStrengthensAuthority}</div>
                 </div>
-
                 <div>
                   <div className="font-semibold text-white">Strategic outcome</div>
                   <div className="mt-1">{active.strategicOutcome}</div>
@@ -513,7 +462,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
               </div>
             </div>
 
-            {/* Right: distribution + questions + inspiration */}
             <div className="space-y-6">
               <div className="rounded-3xl border border-white/10 bg-black/20 p-6">
                 <div className="text-lg font-bold">Distribution play</div>
@@ -545,7 +493,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
               <div className="rounded-3xl border border-white/10 bg-black/20 p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-lg font-bold">Trending / inspirational videos</div>
-
                   <button
                     onClick={() => refreshIdeasForWeek(active.week)}
                     className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-white hover:bg-white/10"
@@ -553,7 +500,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
                     Refresh ideas
                   </button>
                 </div>
-
                 <div className="mt-4 space-y-3">
                   {active.inspiration.map((v) => (
                     <div
@@ -572,7 +518,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
                           Open link
                         </a>
                       </div>
-
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => saveInspirationToEpisode(active.week, v)}
@@ -590,7 +535,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
                     </div>
                   ))}
                 </div>
-
                 {!isPaid && (
                   <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/70">
                     Demo includes Weeks 1–3. Want Weeks 4–12 + export?{" "}
@@ -608,7 +552,6 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
           </div>
         )}
 
-        {/* Locked week view */}
         {!isPaid && plan && activeWeek > 3 && (
           <div className="mt-8 rounded-2xl border border-white/10 bg-black/20 p-6 text-white/70">
             <div className="text-lg font-semibold text-white">Week {activeWeek} is part of the full version.</div>
@@ -625,8 +568,3 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
     </div>
   );
 }
-```
-
-Then push with:
-```
-git add app/planner/PlannerClient.tsx && git commit -m "Fix: show correct week count in empty state based on paid status" && git push

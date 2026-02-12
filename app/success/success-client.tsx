@@ -35,7 +35,6 @@ export default function SuccessClient({ sessionId }: { sessionId: string }) {
         return;
       }
 
-      // Hard redirect so server re-reads the cookie and unlocks the full planner
       window.location.href = "/planner";
     } catch (e: any) {
       setError(e?.message || "Something went wrong. Please try again.");
@@ -82,8 +81,3 @@ export default function SuccessClient({ sessionId }: { sessionId: string }) {
     </div>
   );
 }
-```
-
-Then push it with:
-```
-git add app/success/success-client.tsx && git commit -m "Fix: use hard redirect after activation so cookie is read correctly" && git push
