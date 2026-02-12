@@ -35,9 +35,8 @@ export default function SuccessClient({ sessionId }: { sessionId: string }) {
         return;
       }
 
-      // If /api/activate sets the unlock cookie correctly, this will land on full version.
-      router.push("/planner");
-      router.refresh();
+      // Hard redirect so server re-reads the cookie and unlocks the full planner
+      window.location.href = "/planner";
     } catch (e: any) {
       setError(e?.message || "Something went wrong. Please try again.");
       setActivating(false);
@@ -51,8 +50,6 @@ export default function SuccessClient({ sessionId }: { sessionId: string }) {
       <h1 className="mt-3 text-5xl font-extrabold tracking-tight">
         Payment received.
       </h1>
-
-      {/* REMOVED: "One moment..." line */}
 
       <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
         <button
@@ -85,3 +82,8 @@ export default function SuccessClient({ sessionId }: { sessionId: string }) {
     </div>
   );
 }
+```
+
+Then push it with:
+```
+git add app/success/success-client.tsx && git commit -m "Fix: use hard redirect after activation so cookie is read correctly" && git push
