@@ -1,12 +1,14 @@
 // app/success/page.tsx
+export const dynamic = "force-dynamic";
+
 import SuccessClient from "./success-client";
 
 export default function SuccessPage({
   searchParams,
 }: {
-  searchParams: { session_id?: string };
+  searchParams?: { session_id?: string; sessionId?: string };
 }) {
-  const sessionId = searchParams?.session_id ?? "";
+  const sessionId = searchParams?.session_id || searchParams?.sessionId || "";
 
   return (
     <main className="min-h-screen bg-black text-white">
