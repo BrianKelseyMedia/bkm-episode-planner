@@ -6,7 +6,8 @@ import { Suspense } from "react";
 import PlannerClient from "./PlannerClient";
 
 export default function PlannerPage() {
-  const paid = cookies().get("bkm_paid")?.value === "1";
+  const cookieStore = await cookies();
+const paid = cookieStore.get("bkm_paid")?.value === "1";
 
   return (
     <main className="min-h-screen bg-black text-white">
