@@ -1,14 +1,10 @@
-// lib/stripe.ts
+// lib/stripe-server.ts
+import "server-only";
 import Stripe from "stripe";
-
-export const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/fZu9AS9lG2Pt6IQdQLdAk0f";
-
 
 const secretKey = process.env.STRIPE_SECRET_KEY;
 
 if (!secretKey) {
-  // This prevents Vercel build from succeeding without env vars,
-  // and makes the error obvious instead of silent.
   throw new Error("Missing STRIPE_SECRET_KEY env var");
 }
 
