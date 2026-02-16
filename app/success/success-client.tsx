@@ -1,94 +1,79 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function SuccessClient({ sessionId }: { sessionId: string }) {
   const router = useRouter();
-  const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
-  const [errorMsg, setErrorMsg] = useState<string>("");
+  const sp = useSearchParams();
 
-  const resolvedSessionId = useMemo(() => {
-    if (sessionId) return sessionId;
+  // If the server prop is blank (due to caching/static), fall back to reading from the browser URL
+  const effectiveSessionId = useMemo(() => {
+    return sessionId || sp.get("session_id") || sp.get("sessionId") || "";
+  }, [sessionId, sp]);
 
-    // Fallback: read from URL directly
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("session_id") || params.get("sessionId") || "";
-    }
-    return "";
-  }, [sessionId]);
+  const [status, setStatus] = useState<"idle" | "working" | "error" | "ok">("idle");
+  const [error, setError] = useState("");
 
   async function handleOpenFull() {
-    setErrorMsg("");
-
-    if (!resolvedSessionId) {
+    if (!effectiveSessionId) {
       setStatus("error");
-      setErrorMsg("Missing session id. Please return to Stripe and try again.");
+      setError("Missing session id. Please return to Stripe and try again.");
       return;
     }
 
-    try {
-      setStatus("loading");
+    setStatus("working");
+    setError("");
 
+    try {
       const res = await fetch("/api/activate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: resolvedSessionId }),
+        body: JSON.stringify({ sessionId: effectiveSessionId }),
       });
 
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(text || `Activation failed (${res.status})`);
+        const msg = await res.text().catch(() => "");
+        throw new Error(msg || `Activation failed (${res.status})`);
       }
 
-      // Backup cookie (in case Set-Cookie doesn’t stick for any reason)
-      document.cookie = `bkm_paid=1; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax; Secure`;
-
       setStatus("ok");
-
-      // Hard navigate so the server definitely sees the cookie
-      window.location.href = "/planner";
-    } catch (err: any) {
+      router.push("/planner");
+    } catch (e: any) {
       setStatus("error");
-      setErrorMsg(err?.message || "Something went wrong activating your purchase.");
+      setError(e?.message || "Activation failed. Please try again.");
     }
   }
-
-  function handleBackHome() {
-    router.push("/");
-  }
-
-  const showRedError = status === "error" && !!errorMsg;
 
   return (
     <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-center">
       <div className="text-sm text-white/60">Success</div>
-      <h1 className="mt-3 text-5xl font-extrabold tracking-tight">Payment received.</h1>
+      <h1 className="mt-4 text-5xl font-extrabold">Payment received.</h1>
 
-      <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <button
           onClick={handleOpenFull}
-          disabled={status === "loading"}
-          className="rounded-full bg-amber-500 px-10 py-4 text-lg font-bold text-black hover:bg-amber-400 disabled:opacity-60"
+          disabled={status === "working"}
+          className="rounded-full bg-amber-500 px-8 py-3 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-60"
         >
-          {status === "loading" ? "Activating..." : "Open full version"}
+          {status === "working" ? "Activating..." : "Open full version"}
         </button>
 
         <button
-          onClick={handleBackHome}
-          className="rounded-full border border-white/15 bg-white/5 px-10 py-4 text-lg font-semibold text-white hover:bg-white/10"
+          onClick={() => router.push("/")}
+          className="rounded-full border border-white/15 bg-white/5 px-8 py-3 text-sm font-semibold text-white hover:bg-white/10"
         >
           Back home
         </button>
       </div>
 
-      {showRedError && (
-        <div className="mt-6 text-sm text-red-400">
-          {errorMsg}
-          <div className="mt-2 text-white/50">
-            Tip: your Stripe success URL must include <span className="font-mono">?session_id=&#123;CHECKOUT_SESSION_ID&#125;</span>
-          </div>
+      {status === "error" && (
+        <div className="mt-6 text-sm text-red-400">{error}</div>
+      )}
+
+      {!effectiveSessionId && (
+        <div className="mt-6 text-xs text-white/50">
+          Tip: this page must include <span className="font-mono">?session_id=...</span> from Stripe.
         </div>
       )}
     </div>
