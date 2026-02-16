@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { STRIPE_PAYMENT_LINK } from "@/lib/links";
+import { STRIPE_PAYMENT_LINK } from "@/lib/stripe";
 
 type InspirationItem = {
   id: string;
