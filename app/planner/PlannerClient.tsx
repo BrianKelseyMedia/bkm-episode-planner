@@ -67,8 +67,7 @@
          <a href={STRIPE_PAYMENT_LINK} className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">
               Unlock the full 12 weeks ($29)
             </a>
-          Unlock the full 12 weeks ($29)
-        </a>
+
       )}
     </div>
   </div>
