@@ -33,7 +33,7 @@ export default function HomePage() {
         </div>
 
         <Link
-          href="/planner"
+          href="/demo"
           className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
         >
           Try the demo
