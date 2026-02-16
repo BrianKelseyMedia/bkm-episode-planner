@@ -1,83 +1,89 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 
 export default function SuccessClient({ sessionId }: { sessionId: string }) {
-  const router = useRouter();
-  const [activating, setActivating] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [status, setStatus] = useState<"idle" | "activating" | "activated" | "error" | "no-session">("idle");
+  const hasSession = Boolean(sessionId && sessionId.trim().length > 0);
 
-  const hasSession = useMemo(() => Boolean(sessionId && sessionId.trim()), [sessionId]);
-
-  async function handleOpenFullVersion() {
-    setError("");
-
+  useEffect(() => {
     if (!hasSession) {
-      setError("Missing session id. Please return to Stripe and try again.");
+      setStatus("no-session");
       return;
     }
 
-    try {
-      setActivating(true);
+    let cancelled = false;
 
-      const res = await fetch("/api/activate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId }),
-      });
+    async function activate() {
+      try {
+        if (!cancelled) setStatus("activating");
 
-      const data = await res.json().catch(() => ({}));
+        const res = await fetch("/api/activate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
 
-      if (!res.ok) {
-        setError(data?.error || "Could not verify payment. Please try again.");
-        setActivating(false);
-        return;
+        if (!res.ok) {
+          throw new Error(`Activate failed: ${res.status}`);
+        }
+
+        if (!cancelled) setStatus("activated");
+      } catch (e) {
+        if (!cancelled) setStatus("error");
       }
-
-      window.location.href = "/planner";
-    } catch (e: any) {
-      setError(e?.message || "Something went wrong. Please try again.");
-      setActivating(false);
     }
-  }
+
+    activate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasSession, sessionId]);
+
+  const activating = status === "activating";
+  const activated = status === "activated";
 
   return (
-    <div className="w-full rounded-3xl border border-white/10 bg-white/5 p-10 text-center">
+    <div className="rounded-[36px] border border-white/10 bg-white/5 p-10 text-center shadow-2xl">
       <div className="text-sm text-white/60">Success</div>
 
-      <h1 className="mt-3 text-5xl font-extrabold tracking-tight">
-        Payment received.
-      </h1>
+      <h1 className="mt-4 text-5xl font-extrabold tracking-tight">Payment received.</h1>
 
-      <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-        <button
-          onClick={handleOpenFullVersion}
-          disabled={activating}
-          className="rounded-full bg-amber-500 px-8 py-4 font-semibold text-black disabled:opacity-60"
-        >
-          {activating ? "Unlocking..." : "Open full version"}
-        </button>
-
-        <button
-          onClick={() => router.push("/")}
-          className="rounded-full border border-white/15 bg-white/5 px-8 py-4 font-semibold text-white"
-        >
-          Back home
-        </button>
+      <div className="mt-4 text-sm text-white/60">
+        {status === "activating" && "Activating your full access..."}
+        {status === "activated" && "You’re all set. Full access is active."}
+        {status === "error" && "We received your payment, but activation didn’t complete automatically. Try opening the full version anyway."}
+        {status === "no-session" && "We received your payment, but this page didn’t include a session ID. You can still continue to the planner."}
+        {status === "idle" && "Preparing your access..."}
       </div>
 
-      {error && (
-        <p className="mt-6 text-sm text-red-400">
-          {error}
-        </p>
-      )}
+      <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+        <Link
+          href="/planner"
+          className={[
+            "inline-flex items-center justify-center rounded-full px-10 py-4 text-sm font-bold transition",
+            activating ? "cursor-not-allowed bg-amber-500/70 text-black/80" : "bg-amber-500 text-black hover:bg-amber-400",
+          ].join(" ")}
+          aria-disabled={activating}
+          onClick={(e) => {
+            if (activating) e.preventDefault();
+          }}
+        >
+          {activating ? "Activating..." : "Open full version"}
+        </Link>
 
-      {!hasSession && (
-        <p className="mt-6 text-sm text-white/50">
-          Tip: this page must include <code>?session_id=...</code> from Stripe.
-        </p>
-      )}
+        <Link
+          href="/"
+          className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-10 py-4 text-sm font-semibold text-white hover:bg-white/10"
+        >
+          Back home
+        </Link>
+      </div>
+
+      {/* Optional: tiny debug line you can remove later */}
+      {/* <div className="mt-6 text-xs text-white/40">session: {hasSession ? sessionId : "(none)"}</div> */}
     </div>
   );
 }
