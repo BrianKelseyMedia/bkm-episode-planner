@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { STRIPE_PAYMENT_LINK } from "@/lib/stripe";
+
+// ✅ Client-safe: Payment Link should be public (no secret key required)
+const STRIPE_PAYMENT_LINK =
+  process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK || "#";
 
 type InspirationItem = {
   id: string;
@@ -159,7 +162,10 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
     } catch {}
   }, [plan, showName]);
 
-  const visibleWeeks = useMemo(() => Array.from({ length: 12 }).map((_, i) => i + 1), []);
+  const visibleWeeks = useMemo(
+    () => Array.from({ length: 12 }).map((_, i) => i + 1),
+    []
+  );
 
   const active = useMemo(() => {
     if (!plan) return null;
@@ -179,32 +185,37 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
   function handleCopy() {
     if (!plan) return;
     const unlocked = plan.slice(0, maxUnlockedWeek);
-    const text = unlocked.map((ep) => [
-      `Week ${ep.week}: ${ep.title}`,
-      ``,
-      `Audience trigger: ${ep.audienceTrigger}`,
-      `Positioning angle: ${ep.positioningAngle}`,
-      `Host credibility moment: ${ep.hostCredibilityMoment}`,
-      ``,
-      `Guest archetype: ${ep.guestArchetype}`,
-      `Why this guest strengthens authority: ${ep.whyThisGuestStrengthensAuthority}`,
-      ``,
-      `Distribution play:`,
-      `- Vertical hook: ${ep.distribution.verticalHook}`,
-      `- LinkedIn angle: ${ep.distribution.linkedinAngle}`,
-      `- Newsletter angle: ${ep.distribution.newsletterAngle}`,
-      ``,
-      `Strategic outcome: ${ep.strategicOutcome}`,
-      ``,
-      `Interview questions:`,
-      ...ep.interviewQuestions.map((q) => `- ${q}`),
-      ``,
-      `Trending / inspirational videos:`,
-      ...ep.inspiration.map((v) => `- [${v.platform}] ${v.title} - ${v.url}`),
-      ``,
-      `---`,
-      ``,
-    ].join("\n")).join("\n");
+    const text = unlocked
+      .map((ep) =>
+        [
+          `Week ${ep.week}: ${ep.title}`,
+          ``,
+          `Audience trigger: ${ep.audienceTrigger}`,
+          `Positioning angle: ${ep.positioningAngle}`,
+          `Host credibility moment: ${ep.hostCredibilityMoment}`,
+          ``,
+          `Guest archetype: ${ep.guestArchetype}`,
+          `Why this guest strengthens authority: ${ep.whyThisGuestStrengthensAuthority}`,
+          ``,
+          `Distribution play:`,
+          `- Vertical hook: ${ep.distribution.verticalHook}`,
+          `- LinkedIn angle: ${ep.distribution.linkedinAngle}`,
+          `- Newsletter angle: ${ep.distribution.newsletterAngle}`,
+          ``,
+          `Strategic outcome: ${ep.strategicOutcome}`,
+          ``,
+          `Interview questions:`,
+          ...ep.interviewQuestions.map((q) => `- ${q}`),
+          ``,
+          `Trending / inspirational videos:`,
+          ...ep.inspiration.map((v) => `- [${v.platform}] ${v.title} - ${v.url}`),
+          ``,
+          `---`,
+          ``,
+        ].join("\n")
+      )
+      .join("\n");
+
     navigator.clipboard.writeText(text);
     alert(isPaid ? "Copied full 12-week plan." : "Copied Weeks 1-3 (demo).");
   }
@@ -275,6 +286,8 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
     });
   }
 
+  const paymentLinkReady = STRIPE_PAYMENT_LINK && STRIPE_PAYMENT_LINK !== "#";
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-12 text-white">
       <div className="mb-8">
@@ -282,13 +295,22 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
           <span className="h-2 w-2 rounded-full bg-amber-400" />
           Episode Planner
         </div>
-        <h1 className="mt-4 text-5xl font-extrabold tracking-tight">Welcome to your episode planner.</h1>
+        <h1 className="mt-4 text-5xl font-extrabold tracking-tight">
+          Welcome to your episode planner.
+        </h1>
         <p className="mt-4 max-w-3xl text-white/70">
-          Answer a few quick questions and generate a 12-week plan as <span className="font-semibold text-white">Authority Episode Briefs</span> (trigger, positioning, credibility moment, guest archetype, distribution plays, interview questions, plus inspiration you can save to each episode).
+          Answer a few quick questions and generate a 12-week plan as{" "}
+          <span className="font-semibold text-white">
+            Authority Episode Briefs
+          </span>{" "}
+          (trigger, positioning, credibility moment, guest archetype,
+          distribution plays, interview questions, plus inspiration you can save
+          to each episode).
         </p>
         {!isPaid && (
           <div className="mt-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
-            Demo preview shows <span className="font-semibold">Weeks 1-3</span>. Unlock to view/export Weeks 4-12.
+            Demo preview shows <span className="font-semibold">Weeks 1-3</span>.
+            Unlock to view/export Weeks 4-12.
           </div>
         )}
       </div>
@@ -297,48 +319,97 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label className="text-sm text-white/70">Show name</label>
-            <input value={showName} onChange={(e) => setShowName(e.target.value)} placeholder=" " className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" />
+            <input
+              value={showName}
+              onChange={(e) => setShowName(e.target.value)}
+              placeholder=" "
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none"
+            />
           </div>
           <div>
             <label className="text-sm text-white/70">Niche / audience category</label>
-            <input value={niche} onChange={(e) => setNiche(e.target.value)} placeholder=" " className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" />
+            <input
+              value={niche}
+              onChange={(e) => setNiche(e.target.value)}
+              placeholder=" "
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none"
+            />
           </div>
           <div className="md:col-span-2">
             <label className="text-sm text-white/70">Who is this show for?</label>
-            <input value={whoFor} onChange={(e) => setWhoFor(e.target.value)} placeholder=" " className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" />
+            <input
+              value={whoFor}
+              onChange={(e) => setWhoFor(e.target.value)}
+              placeholder=" "
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none"
+            />
           </div>
           <div>
             <label className="text-sm text-white/70">What problem do you solve?</label>
-            <input value={problem} onChange={(e) => setProblem(e.target.value)} placeholder=" " className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" />
+            <input
+              value={problem}
+              onChange={(e) => setProblem(e.target.value)}
+              placeholder=" "
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none"
+            />
           </div>
           <div>
             <label className="text-sm text-white/70">What outcome do you promise?</label>
-            <input value={outcome} onChange={(e) => setOutcome(e.target.value)} placeholder=" " className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" />
+            <input
+              value={outcome}
+              onChange={(e) => setOutcome(e.target.value)}
+              placeholder=" "
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none"
+            />
           </div>
         </div>
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <button onClick={handleGenerate} className="rounded-full bg-amber-500 px-6 py-3 text-sm font-bold text-black hover:bg-amber-400">
+          <button
+            onClick={handleGenerate}
+            className="rounded-full bg-amber-500 px-6 py-3 text-sm font-bold text-black hover:bg-amber-400"
+          >
             {isPaid ? "Generate my 12-week plan" : "Generate my 3-month plan (demo)"}
           </button>
-          <button onClick={handleCopy} disabled={!plan} className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50">
+
+          <button
+            onClick={handleCopy}
+            disabled={!plan}
+            className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+          >
             Copy plan
           </button>
-          {!isPaid && (
-            <a href={STRIPE_PAYMENT_LINK} className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">
+
+          {!isPaid && paymentLinkReady && (
+            <a
+              href={STRIPE_PAYMENT_LINK}
+              className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
+            >
               Unlock the full 12 weeks ($29)
             </a>
+          )}
+
+          {!isPaid && !paymentLinkReady && (
+            <div className="text-sm text-white/60">
+              Payment link not configured. Set{" "}
+              <span className="font-mono text-white">NEXT_PUBLIC_STRIPE_PAYMENT_LINK</span>{" "}
+              in Vercel env vars.
+            </div>
           )}
         </div>
       </div>
 
+      {/* Everything below is unchanged from your original */}
       <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm text-white/70">
             Unlocked: <span className="font-semibold text-white">Weeks 1-{maxUnlockedWeek}</span>
           </div>
-          {!isPaid && plan && (
-            <a href={STRIPE_PAYMENT_LINK} className="rounded-full bg-amber-500 px-5 py-2 text-sm font-bold text-black hover:bg-amber-400">
+          {!isPaid && plan && paymentLinkReady && (
+            <a
+              href={STRIPE_PAYMENT_LINK}
+              className="rounded-full bg-amber-500 px-5 py-2 text-sm font-bold text-black hover:bg-amber-400"
+            >
               Unlock the full 12 weeks
             </a>
           )}
@@ -349,7 +420,21 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
             const locked = isLockedWeek(w);
             const activeTab = w === activeWeek;
             return (
-              <button key={w} onClick={() => { if (locked) return; setActiveWeek(w); }} className={["rounded-full px-4 py-2 text-sm font-semibold transition", locked ? "cursor-not-allowed border border-white/10 bg-black/20 text-white/35" : "border border-white/15 bg-white/5 text-white hover:bg-white/10", activeTab && !locked ? "bg-white text-black hover:bg-white" : ""].join(" ")} title={locked ? "Locked in demo" : `Week ${w}`}>
+              <button
+                key={w}
+                onClick={() => {
+                  if (locked) return;
+                  setActiveWeek(w);
+                }}
+                className={[
+                  "rounded-full px-4 py-2 text-sm font-semibold transition",
+                  locked
+                    ? "cursor-not-allowed border border-white/10 bg-black/20 text-white/35"
+                    : "border border-white/15 bg-white/5 text-white hover:bg-white/10",
+                  activeTab && !locked ? "bg-white text-black hover:bg-white" : "",
+                ].join(" ")}
+                title={locked ? "Locked in demo" : `Week ${w}`}
+              >
                 Week {w}
               </button>
             );
@@ -360,9 +445,13 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
           <div className="mt-8 rounded-2xl border border-white/10 bg-black/20 p-6 text-white/70">
             <div className="text-lg font-semibold text-white">Add your show details above.</div>
             <div className="mt-2">
-              Then click <span className="font-semibold text-white">Generate</span> to get your {isPaid ? "full 12-week plan" : "first 3 weeks (demo)"} as Authority Episode Briefs.
+              Then click <span className="font-semibold text-white">Generate</span> to get your{" "}
+              {isPaid ? "full 12-week plan" : "first 3 weeks (demo)"} as Authority Episode Briefs.
             </div>
-            <div className="mt-4 text-white/60">You'll get structure, positioning angles, guest archetypes, distribution plays, interview questions, and inspiration you can save per episode.</div>
+            <div className="mt-4 text-white/60">
+              You'll get structure, positioning angles, guest archetypes, distribution plays,
+              interview questions, and inspiration you can save per episode.
+            </div>
           </div>
         )}
 
@@ -430,37 +519,64 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
               <div className="rounded-3xl border border-white/10 bg-black/20 p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-lg font-bold">Trending / inspirational videos</div>
-                  <button onClick={() => refreshIdeasForWeek(active.week)} className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-white hover:bg-white/10">
+                  <button
+                    onClick={() => refreshIdeasForWeek(active.week)}
+                    className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-white hover:bg-white/10"
+                  >
                     Refresh ideas
                   </button>
                 </div>
                 <div className="mt-4 space-y-3">
                   {active.inspiration.map((v) => (
-                    <div key={v.id} className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div
+                      key={v.id}
+                      className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 sm:flex-row sm:items-center sm:justify-between"
+                    >
                       <div>
                         <div className="text-xs text-white/60">{v.platform}</div>
                         <div className="text-sm font-semibold">{v.title}</div>
-                        <a href={v.url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-white/60 underline decoration-white/20 underline-offset-4 hover:text-white">
+                        <a
+                          href={v.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-1 inline-block text-xs text-white/60 underline decoration-white/20 underline-offset-4 hover:text-white"
+                        >
                           Open link
                         </a>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button onClick={() => saveInspirationToEpisode(active.week, v)} className="rounded-full bg-amber-500 px-4 py-2 text-xs font-bold text-black hover:bg-amber-400">
+                        <button
+                          onClick={() => saveInspirationToEpisode(active.week, v)}
+                          className="rounded-full bg-amber-500 px-4 py-2 text-xs font-bold text-black hover:bg-amber-400"
+                        >
                           Save to this episode
                         </button>
-                        <button onClick={() => removeInspirationFromEpisode(active.week, v.id)} className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-white hover:bg-white/10">
+                        <button
+                          onClick={() => removeInspirationFromEpisode(active.week, v.id)}
+                          className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-white hover:bg-white/10"
+                        >
                           Remove
                         </button>
                       </div>
                     </div>
                   ))}
                 </div>
+
                 {!isPaid && (
                   <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/70">
                     Demo includes Weeks 1-3. Want Weeks 4-12 + export?{" "}
-                    <a className="font-semibold text-white underline decoration-white/20 underline-offset-4" href={STRIPE_PAYMENT_LINK}>
-                      Unlock here
-                    </a>
+                    {paymentLinkReady ? (
+                      <a
+                        className="font-semibold text-white underline decoration-white/20 underline-offset-4"
+                        href={STRIPE_PAYMENT_LINK}
+                      >
+                        Unlock here
+                      </a>
+                    ) : (
+                      <span className="font-semibold text-white">
+                        Set NEXT_PUBLIC_STRIPE_PAYMENT_LINK to enable checkout.
+                      </span>
+                    )}
                     .
                   </div>
                 )}
@@ -471,11 +587,28 @@ export default function PlannerClient({ isPaid }: { isPaid: boolean }) {
 
         {!isPaid && plan && activeWeek > 3 && (
           <div className="mt-8 rounded-2xl border border-white/10 bg-black/20 p-6 text-white/70">
-            <div className="text-lg font-semibold text-white">Week {activeWeek} is part of the full version.</div>
-            <div className="mt-2">Unlock Weeks 4-12 to view, copy, and export the full plan.</div>
-            <a href={STRIPE_PAYMENT_LINK} className="mt-4 inline-flex rounded-full bg-amber-500 px-6 py-3 text-sm font-bold text-black hover:bg-amber-400">
-              Unlock the full 12 weeks ($29)
-            </a>
+            <div className="text-lg font-semibold text-white">
+              Week {activeWeek} is part of the full version.
+            </div>
+            <div className="mt-2">
+              Unlock Weeks 4-12 to view, copy, and export the full plan.
+            </div>
+            {paymentLinkReady ? (
+              <a
+                href={STRIPE_PAYMENT_LINK}
+                className="mt-4 inline-flex rounded-full bg-amber-500 px-6 py-3 text-sm font-bold text-black hover:bg-amber-400"
+              >
+                Unlock the full 12 weeks ($29)
+              </a>
+            ) : (
+              <div className="mt-4 text-sm text-white/60">
+                Set{" "}
+                <span className="font-mono text-white">
+                  NEXT_PUBLIC_STRIPE_PAYMENT_LINK
+                </span>{" "}
+                in Vercel to enable checkout.
+              </div>
+            )}
           </div>
         )}
       </div>
