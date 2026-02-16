@@ -8,6 +8,7 @@ export default function SuccessPage({
 }: {
   searchParams?: { session_id?: string; sessionId?: string };
 }) {
+  // support both spellings just in case
   const sessionId = searchParams?.session_id || searchParams?.sessionId || "";
 
   return (
