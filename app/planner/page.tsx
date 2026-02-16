@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { Suspense } from "react";
 import PlannerClient from "./PlannerClient";
 
-export default function PlannerPage() {
+export default async function PlannerPage() {
   const cookieStore = await cookies();
 const paid = cookieStore.get("bkm_paid")?.value === "1";
 
